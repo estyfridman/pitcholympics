@@ -135,3 +135,4 @@ export * from './libraryPageTypes';
 export * from './patchNote';
 export * from './pianoTypes';
 export * from './piecesTypes';
+export * from './pollsTypes';
