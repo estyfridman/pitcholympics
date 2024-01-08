@@ -1,89 +1,106 @@
 import { Question } from '@models';
-import { MultipleChoiceQuestion as QuestionType } from '@types';
+import { Answer } from '@types';
 import { connectToDB } from '@utils';
 import mongoose from 'mongoose';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-
-export async function createQuestion(questionOb: QuestionType){
+export async function createQuestion(request: NextApiRequest, response: NextApiResponse){
     connectToDB();
     try {
-        const QuestionModel = mongoose.model('Question');
+        const QuestionModel = mongoose.model('Question');//?
 
+        const { localQuestion, localAnswers } = request.body;
         const qs = new QuestionModel({
-            question: questionOb.question,
-            answers: questionOb.answers,
+            question: localQuestion,
+            answers: localAnswers,
         });
 
         await Question.create(qs);
+        return response.json({ message: 'Created successfully' });
 
     } catch (error) {
-        console.log(error);
+        return response.status(500).json({ message: 'Internal Server Error' });    
     }
-};
+}
 
 //when user fill poll question
-export async function updateAnswer(questionId: string, answerId: string){
+//in body request i need 1)questionId 2)answerId 3)increment = true is add or minus
+export async function updateAnswer(request: NextApiRequest, response: NextApiResponse){
     connectToDB();
     try {
+        const { questionId } = request.body;
+        const { answerId } = request.body;
+        const { increment } = request.body;
         if ((!mongoose.Types.ObjectId.isValid(questionId)) || (!mongoose.Types.ObjectId.isValid(answerId))){
             console.log("Invalid id. The question has not been updated");
-            return;
+            return response.status(500).json({ message: 'Internal Server Error' });  
         }
-        await Question.updateOne(
-            { _id: questionId, 'answers.answerId': answerId },
-            { $inc: { 'answers.$.amountChoices': 1 } }
-          );
+
+        if (increment){
+            await Question.updateOne(
+                { _id: questionId, 'answers.answerId': answerId },
+                { $inc: { 'answers.$.amountChoices': 1 } }
+              );
+        } else {
+            await Question.updateOne(
+                { _id: questionId, 'answers.answerId': answerId },
+                { $inc: { 'answers.$.amountChoices': -1 } }
+              );
+        }
 
     } catch (error) {
-        console.log(error);
+        return response.status(500).json({ message: error });    
     }
-};
+}
 
 //
-export async function getQuestion(questionId: mongoose.Types.ObjectId){
+export async function getQuestion(request: NextApiRequest, response: NextApiResponse){
     connectToDB();
     try {
+        const questionId = request.body.question;
         if ((!mongoose.Types.ObjectId.isValid(questionId))){
-            console.log("Invalid id");
-            return;
+            return response.status(500).json({ message: 'Invalid id' });   
         }
         await Question.findById(questionId);
 
     } catch (error) {
-        console.log(error);
+        return response.status(500).json({ message: error });    
     }
-};
+}
 
 //
-export async function getQuestions(){
+export async function getQuestions(request: NextApiRequest, response: NextApiResponse){
     connectToDB();
     try {
-        await Question.find();
-
+        if (request.method === "GET"){
+            await Question.find();
+        }
     } catch (error) {
-        console.log(error);
+        return response.status(500).json({ message: error });
     }
-};
+}
 
 //when Admin Change question
-export async function updateQuestion(questionT: QuestionType){
+export async function updateQuestion(request: NextApiRequest, response: NextApiResponse){
+    
     connectToDB();
     try {
-        if ((!mongoose.Types.ObjectId.isValid(questionT.id))){
-            console.log("Invalid id. The question has not been updated");
+        const localQuestion = request.body.question;
+        if ((!mongoose.Types.ObjectId.isValid(localQuestion.id))){
+            return response.status(500).json({ message: 'Invalid id. The question has not been updated' });    
             return;
         }
 
         const updateFields: { [key: string]: any } = {};
 
         // Check if question text needs to be updated
-        if (questionT.question ) {
-            updateFields['question'] = questionT.question;
+        if (request.body.questionT.question ) {
+            updateFields['question'] = request.body.questionT.question;
         }
 
         // Check if answer text needs to be updated
-        if (questionT.answers && questionT.answers.length > 0) {
-            questionT.answers.forEach((answer) => {
+        if (localQuestion.answers && localQuestion.answers.length > 0) {
+            localQuestion.answers.forEach((answer: Answer) => {
                 if (mongoose.Types.ObjectId.isValid(answer.id) && answer.text) {
                     updateFields[`answers.$[elem].text`] = answer.text;
                 }
@@ -91,28 +108,27 @@ export async function updateQuestion(questionT: QuestionType){
         }
 
         await Question.updateOne(
-            { _id: questionT.id },
+            { _id: localQuestion.id },
             { $set: updateFields },
-            { arrayFilters: [{ 'elem._id': { $in: questionT.answers.map((answer) => answer.id) } }] }
+            //{ arrayFilters: [{ 'elem._id': { $in: localQuestion.answers.map((answer) => answer.id) } }] }??
         );
 
-        console.log("Question updated successfully");
+        return response.status(200).json({ message: 'Question updated successfully' });    
 
     } catch (error) {
-        console.log(error);
+        return response.status(500).json({ message: error });    
     }
-};
+}
 
 
-export async function deleteQuestion(questionId: string){
+export async function deleteQuestion(request: NextApiRequest, response: NextApiResponse){
     connectToDB();
     try {
-        if (!mongoose.Types.ObjectId.isValid(questionId)){
-            console.log("Invalid id. The question has not been deleted");
-            return;
+        if (!mongoose.Types.ObjectId.isValid(request.body.questionId)){
+            return response.status(400).json({ message: 'Invalid id. The question has not been deleted' });    
         }
-        await Question.findByIdAndDelete(questionId);
+        await Question.findByIdAndDelete(request.body.questionId);
     } catch (error) {
-        console.log(error);
+        return response.status(500).json({ message: error });    
     }
-};
+}
