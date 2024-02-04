@@ -1,77 +1,65 @@
-'use client'
+'use client';
 
 import { Locale } from '@/i18n.config';
 import { Link, Text } from '@core';
 import { MultipleChoiceQuestion } from '@types';
-import { useEffect, useState } from 'react';
+//import { Button } from '@core';
+//import { useState } from 'react';
+import QuestionForm from '../_components/QuestionForm';
 
 type Props = {
     params: {
         lang: Locale;
+        poll: MultipleChoiceQuestion;
     };
 };
 
-
-
-const Page = ({ params }: Props) => {
+export default function Page({ params }: Props) {
     const { lang } = params;
-    const [newPoll, setNewPoll] = useState<MultipleChoiceQuestion>();
+    const newQuestion: MultipleChoiceQuestion = {
+        id: 11,
+        questionText: 'so fun text Question from create page',
+        answersTextArray: [
+            {
+                id: 1,
+                text: 'answer A from create new pool page',
+                numberChose: 0,
+            },
+            { id: 2, text: 'answer B', numberChose: 0 },
+            { id: 3, text: 'answer C', numberChose: 0 },
+            { id: 4, text: 'answer D', numberChose: 0 },
+        ],
+    };
 
-
-    async function onSubmit(e: React.FormEvent) {
-        e.preventDefault();
+    async function HandelDelete() {
         try {
-            //await savePoll(newPoll);
-            alert('Post saved successfully');
-            window.location.href = "/posts";
-        } catch(error) {
-            console.error(error);
-            alert(error);
+            const endpoint = '/api/polls';         
+            const requestOptions = {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+            };
+            const res = await fetch(endpoint, requestOptions);
+            // eslint-disable-next-line no-console
+            console.log(res);
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.log(err);
         }
     }
 
-    useEffect(() => {
-        localStorage.setItem('newPoll', JSON.stringify(newPoll));
-    });
-
-
     return (
-        <div className="w-96 bg-sky-300 shadow rounded pt-6 md:p-8 text-center">
+        <div>
             <Text className='text-xl'>Create New Pool</Text>
             <div>
-                <form className='flex flex-col items-center justify-center gap-4' onSubmit={onSubmit}> 
-
-                <div className='m-8'>
-                    <label >Question:</label>
-                    <input type="text" value={newPoll?.question}></input>
-                </div>
-                <div className='m-120'>
-                    <label >Answer A:</label>
-                    <input type="text" ></input>
-                </div>
-                <div className='m-8'>
-                    <label >Answer B:</label>
-                    <input type="text" ></input>
-                </div>
-                <div className='m-8'>
-                    <label >Answer C:</label>
-                    <input type="text" ></input>
-                </div>
-                <div className='m-8'>
-                    <label >Answer D:</label>
-                    <input type="text" ></input>
-                </div>
-                <button type='submit'>Add poll</button>
-                </form>
-
+                <QuestionForm {...newQuestion}></QuestionForm>
             </div>
-            <p> </p>
-            <div className="w"></div>
-                <div className='h-full w-1/4  flex'>
+
+            <div>
+                <div>
                     <Link label='Back' url={`/${lang}/polls`} />
+                    <button onClick={HandelDelete}>delete all question</button>
                 </div>
+            </div>
         </div>
     );
-};
-
-export default Page;
+}

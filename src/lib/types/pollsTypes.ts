@@ -1,21 +1,32 @@
 
-export type Answer = {
-    id: number;
-    text: string;
-};
 
-export type MultipleChoiceQuestion = {
-    id: number;
-    question: string;
-    answers: Answer[];
-};
+export type MultipleChoicesAnswer = {
+    answer: {
+        label: string,
+        mark: boolean,
+    }[],
+}
 
-export type ShortTextQuestion = {
-    id: number;
-    question: string;
-};
+export type OpenAnswer = {
+    answer: string,
+}
 
-export type LinearScale = {
-    id: number;
-    question: string;
-};
+export type ScaleAnswer = {
+    answerNum: number,
+    maxScale: number,
+    minScale: number,
+    jump: number,
+        
+}
+
+export type PollQuestion = {
+    questionText: string,
+    questionType: 'multipleChoices' | 'scaleAnswer' | 'openAnswer',
+    questionAnswer: ScaleAnswer | OpenAnswer | MultipleChoicesAnswer   
+}
+
+export type PollType = {
+    title: string,
+    description: string,
+    questions: [PollQuestion],
+}

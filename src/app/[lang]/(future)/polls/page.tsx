@@ -1,5 +1,10 @@
 import { Locale } from '@/i18n.config';
 import { Link } from '@core';
+import { Poll } from '@models';
+import { PollType } from '@types';
+import { getPolls } from '@dbActions';
+import QuestionCard from './_components/QuestionCard';
+import ScaleAnswerComp from './_components/ScaleAnswerComp';
 
 type Props = {
     params: {
@@ -25,22 +30,22 @@ const mockPoll: Poll = {
     question: 'Which game contributed a lot to you?',
     answers: [
         {
-            id: 11,
+            id: 1,
             text: 'Memo blocks',
             severalchoices: 0,
         },
         {
-            id: 12,
+            id: 2,
             text: 'Pitch Catch',
             severalchoices: 0,
         },
         {
-            id: 13,
+            id: 3,
             text: 'Memo the Melo',
             severalchoices: 0,
         },
         {
-            id: 14,
+            id: 4,
             text: 'None of them',
             severalchoices: 0,
         },
@@ -48,29 +53,44 @@ const mockPoll: Poll = {
     numberofanswers: 0,
 };
 
-const Page = ({ params }: Props) => {
+export default async function PollsPage({ params }: Props) {
     const { lang } = params;
+    const localQuestions: PollType[] = await getPolls();
 
     return (
         <>
             <div className=''>
                 <h1 className=''>Polls Page</h1>
-                <div>            
-                <Link
-                    url={`/${lang}/polls/create-new-pool/`}
-                    label='Create a new pool'
-                />
+                <div>
+                    <Link
+                        url={`/${lang}/polls/create-new-pool/`}
+                        label='Create a new pool'
+                    />
                 </div>
-
+                <div>
+                    <ScaleAnswerComp answerNum={0} maxScale={0} minScale={0} jump={0}/>
+                </div>
                 <div className=''>
                     <div>
                         <h4 className=''>{mockPoll.question}</h4>
-                        <p className=''> Number of Answers:{' '}{mockPoll.numberofanswers}</p>
+                        <p className=''>
+                            {' '}
+                            Number of Answers: {mockPoll.numberofanswers}
+                        </p>
+                    </div>
+                    <div></div>
+                    <div>
+                        {localQuestions.map(question => (
+                            <QuestionCard
+                                key={question.title.slice(0, 10)}
+                                {...question}
+                            />
+                        ))}
                     </div>
                     <Link
                         url={`/${lang}/polls/poll-results/`}
                         label='poll results'
-                    /> {' '}
+                    />{' '}
                     <Link
                         url={`/${lang}/polls/filling-out/`}
                         label='filling out'
@@ -79,6 +99,4 @@ const Page = ({ params }: Props) => {
             </div>
         </>
     );
-};
-
-export default Page;
+}
